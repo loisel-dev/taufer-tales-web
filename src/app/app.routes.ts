@@ -41,5 +41,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/register.component').then(m => m.RegisterComponent),
   },
+
+  {
+    path: 'my/books',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/bookshelf/bookshelf.component').then(m => m.BookshelfComponent),
+  },
   { path: '**', redirectTo: '' },
 ];

@@ -17,6 +17,7 @@
       @if (auth.user(); as u) {
         <span class="subtle">Hi, {{ auth.user()?.username }}!</span>
         <a routerLink="/" class="btn btn-primary">Tales</a>
+        <a routerLink="/my/books" class="btn btn-primary">My Books</a>
         <a routerLink="/tale/new" class="btn btn-primary">+ New Tale</a>
         <a href="" (click)="$event.preventDefault(); logout()" class="btn btn-primary">Logout</a>
       } @else {

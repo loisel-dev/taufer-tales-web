@@ -52,3 +52,11 @@ export type TaleCreate = {
   publishedYear?: number;
   tags?: string;
 };
+
+
+export type ReadingStatus = 'WANT_TO_READ' | 'ALREADY_READ' | 'CURRENTLY_READING' | 'DISCONTINUED';
+
+export interface BookshelfItem {
+  tale: Tale;
+  status: ReadingStatus;
+}

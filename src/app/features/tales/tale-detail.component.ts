@@ -4,6 +4,8 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TalesService } from '../../core/services/tales.service';
 import { ReviewsService, Review } from '../../core/services/reviews.service';
 import { AuthService } from '../../core/services/auth.service';
+import { BookshelfService } from '../../core/services/bookshelf.service';
+import { ReadingStatus } from '../../shared/models';
 
 interface Tale {
   id: number;
@@ -15,43 +17,52 @@ interface Tale {
 
 @Component({
   standalone: true,
-  selector: 'app-tale-detail',
+  selector: 'tt-tale-detail',
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="vstack" style="gap:12px">
-      <ng-container *ngIf="tale() as t">
-        <header class="hstack" style="justify-content:space-between; align-items:baseline;">
-          <div>
-            <h2 style="margin:0">{{ t.title }} <small class="subtle">by {{ t.author }}</small></h2>
-            <div class="subtle">Average rating: <strong class="rating">{{ t.avgRating ?? '–' }}</strong></div>
+    <div class="vstack" style="gap:18px;">
+      <a routerLink="/" class="btn">← Back</a>
+      <h2 style="margin:0;">{{ tale()?.title }}</h2>
+      <div class="muted">{{ tale()?.author }}</div>
+
+      <div *ngIf="auth.user()" class="card">
+        <div class="vstack" style="gap:8px;">
+          <div class="muted">My status</div>
+          <div class="hstack" style="gap:8px; align-items:center;">
+            <select class="input" [value]="myStatus() || ''" (change)="onStatusChange($any($event.target).value)">
+              <option value="">— Set status —</option>
+              <option value="WANT_TO_READ">Want to read</option>
+              <option value="CURRENTLY_READING">Currently reading</option>
+              <option value="ALREADY_READ">Already read</option>
+              <option value="DISCONTINUED">Discontinued</option>
+            </select>
+            <button *ngIf="myStatus()" class="btn" (click)="clear()">Clear</button>
           </div>
+        </div>
+      </div>
 
-          <ng-container *ngIf="auth.user(); else promptLogin">
-            <ng-container *ngIf="myReview(); else write">
-              <a class="btn btn-primary" [routerLink]="['/review/edit', myReview()!.id]">Edit your review</a>
-            </ng-container>
-            <ng-template #write>
-              <a class="btn btn-primary" [routerLink]="['/review/new', t.id]">Write Review</a>
-            </ng-template>
-          </ng-container>
-          <ng-template #promptLogin>
-            <a class="btn btn-ghost" routerLink="/login">Login to review</a>
-          </ng-template>
-        </header>
+      <div class="card" *ngIf="tale()?.description">
+        <div class="muted">Description</div>
+        <p>{{ tale()?.description }}</p>
+      </div>
 
-        <p>{{ t.description }}</p>
-
-        <section class="vstack" style="gap:10px">
-          <h3>Reviews</h3>
-          <article class="card" *ngFor="let r of reviews()">
-            <h4 style="margin:0 0 6px 0">
-              <span class="rating">★ {{ r.rating }}</span> — {{ r.title }}
-              <small class="subtle">by {{ r.username }}</small>
-            </h4>
-            <p style="margin:0">{{ r.body }}</p>
-          </article>
-        </section>
-      </ng-container>
+      <div class="card">
+        <div class="muted">Reviews ({{ reviews().length }})</div>
+        <div class="vstack" style="gap:12px;">
+          @for (r of reviews(); track r.id) {
+            <div class="card" style="border:1px solid #eee;">
+              <div class="hstack" style="justify-content:space-between;">
+                <strong>{{ r.title }}</strong>
+                <span class="rating">{{ r.rating }}</span>
+              </div>
+              <div class="muted">by {{ r.username }}</div>
+              <p>{{ r.body }}</p>
+            </div>
+          } @empty {
+            <div class="muted">No reviews yet.</div>
+          }
+        </div>
+      </div>
     </div>
   `
 })
@@ -60,15 +71,16 @@ export class TaleDetailComponent {
   private api = inject(TalesService);
   private reviewsApi = inject(ReviewsService);
   auth = inject(AuthService);
+  private shelf = inject(BookshelfService);
 
   tale = signal<Tale | null>(null);
   reviews = signal<Review[]>([]);
   myReview = signal<Review | null>(null);
+  myStatus = signal<ReadingStatus | null>(null);
 
-  constructor() {
-    this.route.paramMap.subscribe(pm => {
-      const id = Number(pm.get('id'));
-      if (!id) return;
+  ngOnInit() {
+    this.route.params.subscribe(params => {
+      const id = Number(params['id']);
       this.load(id);
     });
   }
@@ -76,10 +88,26 @@ export class TaleDetailComponent {
   private load(id: number) {
     this.api.get(id).subscribe(t => this.tale.set(t as any));
     this.reviewsApi.forTale(id).subscribe(rs => this.reviews.set(rs));
-    // also fetch the current user's review
     this.reviewsApi.myForTale(id).subscribe({
       next: r => this.myReview.set(r),
       error: () => this.myReview.set(null),
     });
+    // fetch current status
+    this.shelf.myForTale(id).subscribe({
+      next: it => this.myStatus.set(it.status),
+      error: () => this.myStatus.set(null)
+    });
+  }
+
+  onStatusChange(val: string) {
+    const id = this.tale()?.id;
+    if (!id || !val) return;
+    this.shelf.setStatus(id, val as ReadingStatus).subscribe(it => this.myStatus.set(it.status));
+  }
+
+  clear() {
+    const id = this.tale()?.id;
+    if (!id) return;
+    this.shelf.clearStatus(id).subscribe(() => this.myStatus.set(null));
   }
 }
