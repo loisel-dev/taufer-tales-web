@@ -20,36 +20,135 @@ import {ReadingStatus} from '../../shared/models';
 
       <div class="grid">
         @for (t of tales(); track t.id) {
-          <div class="card" style="padding:0;">
-            <div class="hstack" style="gap:14px;padding:14px;">
-              <a class="tale-item" [routerLink]="['/tale', t.id]" style="flex:1;">
-                <div class="vstack" style="gap:6px;">
-                  <div class="muted">#{{t.id}}</div>
-                  <div class="title">{{t.title}}</div>
-                  <div class="muted">{{t.author}}</div>
-                </div>
-              </a>
-              <ng-container *ngIf="isLoggedIn()">
-                <div class="vstack" style="gap:6px; min-width:220px;">
-                  <label class="muted" for="status-{{t.id}}">My status</label>
-                  <select class="input" id="status-{{t.id}}" [value]="statusOf(t.id) || ''" (change)="onStatusChange(t.id, $any($event.target).value)">
-                    <option value="">— Set status —</option>
-                    <option value="WANT_TO_READ">Want to read</option>
-                    <option value="CURRENTLY_READING">Currently reading</option>
-                    <option value="ALREADY_READ">Already read</option>
-                    <option value="DISCONTINUED">Discontinued</option>
-                  </select>
-                  <button *ngIf="statusOf(t.id)" class="btn" (click)="clear(t.id)">Clear</button>
-                </div>
-              </ng-container>
-            </div>
+          <div class="card tale-card">
+            <a class="tale-link" [routerLink]="['/tale', t.id]">
+              <div class="vstack" style="gap:4px;">
+                <div class="muted" style="font-size:12px;">#{{t.id}}</div>
+                <div class="tale-title">{{t.title}}</div>
+                <div class="muted" style="font-size:13px;">{{t.author}}</div>
+              </div>
+            </a>
+            <ng-container *ngIf="isLoggedIn()">
+              <div class="status-section">
+                <label class="status-label" for="status-{{t.id}}">My status</label>
+                <select class="status-select" id="status-{{t.id}}"
+                        [value]="statusOf(t.id) || ''"
+                        (change)="onStatusChange(t.id, $any($event.target).value)">
+                  <option value="">— Select —</option>
+                  <option value="WANT_TO_READ">Want to read</option>
+                  <option value="CURRENTLY_READING">Currently reading</option>
+                  <option value="ALREADY_READ">Already read</option>
+                  <option value="DISCONTINUED">Discontinued</option>
+                </select>
+                <button *ngIf="statusOf(t.id)" class="btn-clear" (click)="clear(t.id)">Clear</button>
+              </div>
+            </ng-container>
           </div>
         } @empty {
           <div class="muted">No tales found.</div>
         }
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .tale-card {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+    }
+
+    .tale-link {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      padding: 8px;
+      margin: -8px;
+      border-radius: 8px;
+      transition: background-color 0.2s;
+    }
+
+    .tale-link:hover {
+      background-color: rgba(85, 102, 27, 0.05);
+    }
+
+    .tale-title {
+      font-weight: 600;
+      font-size: 15px;
+      line-height: 1.3;
+      color: var(--ink-900);
+    }
+
+    .status-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-top: 8px;
+      border-top: 1px solid #f0f0f0;
+      margin-top: auto;
+    }
+
+    .status-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-select {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 13px;
+      border: 1px solid #e5e2da;
+      background: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+
+    .status-select:focus {
+      outline: none;
+      border-color: var(--brand-600);
+      box-shadow: 0 0 0 2px rgba(85, 102, 27, 0.15);
+    }
+
+    .btn-clear {
+      align-self: flex-start;
+      padding: 5px 10px;
+      font-size: 12px;
+      background: transparent;
+      border: 1px solid #e5e2da;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+
+    .btn-clear:hover {
+      border-color: var(--brand-600);
+      color: var(--brand-600);
+    }
+
+    /* Ensure grid columns have minimum reasonable width */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    /* Make cards more compact on smaller screens */
+    @media (max-width: 640px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tale-card {
+        padding: 12px;
+      }
+    }
+  `]
 })
 export class TalesListComponent {
   private svc = inject(TalesService);
