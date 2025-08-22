@@ -20,6 +20,7 @@ interface Tale {
   selector: 'tt-tale-detail',
   imports: [CommonModule, RouterModule],
   template: `
+    @if (tale()?.id) {<div class="hstack" style="justify-content:flex-end; gap:8px; margin-bottom:8px;"><a [routerLink]="['/tale', tale()?.id, 'edit']" class="btn btn-primary">Edit</a></div>}
     <div class="vstack" style="gap:18px;">
       <a routerLink="/" class="btn">← Back</a>
       <h2 style="margin:0;">{{ tale()?.title }}</h2>

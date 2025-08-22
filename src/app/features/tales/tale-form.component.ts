@@ -1,7 +1,7 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import {Router} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {TalesService} from '../../core/services/tales.service';
 import {TaleCreate, Tale} from '../../shared/models';
 
@@ -11,7 +11,7 @@ import {TaleCreate, Tale} from '../../shared/models';
   imports: [CommonModule, FormsModule],
   template: `
     <section class="card vstack">
-      <h2>Add Tale</h2>
+      <h2>{{ editId ? 'Edit Tale' : 'Add Tale' }}</h2>
       <form (ngSubmit)="save()" #f="ngForm" class="vstack">
         <div class="form-field">
           <label for="title">Title</label>
@@ -29,7 +29,7 @@ import {TaleCreate, Tale} from '../../shared/models';
         </div>
 
         <div class="form-field">
-          <label for="publishedYear">Published Year</label>
+          <label for="publishedYear">Published year</label>
           <input class="input" id="publishedYear" name="publishedYear" type="number" [(ngModel)]="model.publishedYear"/>
         </div>
 
@@ -39,7 +39,7 @@ import {TaleCreate, Tale} from '../../shared/models';
         </div>
 
         <div class="form-field">
-          <label for="tags">Tags (comma-separated)</label>
+          <label for="tags">Tags (comma separated)</label>
           <input class="input" id="tags" name="tags" [(ngModel)]="model.tags"/>
         </div>
 
@@ -48,22 +48,27 @@ import {TaleCreate, Tale} from '../../shared/models';
           <textarea id="description" name="description" rows="5" [(ngModel)]="model.description"></textarea>
         </div>
 
-        <div class="hstack" style="gap:10px; margin-top:8px">
-          <button class="btn btn-primary" [disabled]="f.invalid || saving">{{ saving ? 'Saving…' : 'Save' }}</button>
-          <a class="btn btn-ghost" href="" (click)="$event.preventDefault(); goHome()">Cancel</a>
+        <div class="hstack" style="gap:8px;">
+          <button class="btn btn-primary" type="submit" [disabled]="saving || !f.form.valid">
+            {{ saving ? (editId ? 'Updating…' : 'Saving…') : (editId ? 'Update' : 'Save') }}
+          </button>
+          <a class="btn" href="" (click)="$event.preventDefault(); goBack()">Cancel</a>
         </div>
 
-        <p *ngIf="error" class="subtle" style="color:#a33">{{ error }}</p>
+        <p class="error" *ngIf="error">{{ error }}</p>
       </form>
     </section>
-  `
+  `,
 })
 export class TaleFormComponent {
+  private route = inject(ActivatedRoute);
   private router = inject(Router);
   private tales = inject(TalesService);
 
+  editId: number | null = null;
   saving = false;
-  error = '';
+  error: string | null = null;
+
   model: TaleCreate = {
     title: '',
     author: '',
@@ -74,11 +79,42 @@ export class TaleFormComponent {
     tags: ''
   };
 
+  constructor() {
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      const id = Number(idParam);
+      if (!Number.isNaN(id)) {
+        this.editId = id;
+        this.tales.get(id).subscribe({
+          next: (t: Tale) => {
+            this.model = {
+              title: t.title ?? '',
+              author: t.author ?? '',
+              isbn: t.isbn ?? '',
+              description: t.description ?? '',
+              coverUrl: t.coverUrl ?? '',
+              publishedYear: t.publishedYear,
+              tags: t.tags ?? ''
+            };
+          },
+          error: () => {
+            this.error = 'Failed to load tale';
+          }
+        });
+      }
+    }
+  }
+
   save() {
     if (this.saving) return;
     this.saving = true;
-    this.error = '';
-    this.tales.create(this.model).subscribe({
+    this.error = null;
+
+    const obs = this.editId
+      ? this.tales.update(this.editId, this.model)
+      : this.tales.create(this.model);
+
+    obs.subscribe({
       next: (t: Tale) => {
         this.router.navigate(['/tale', t.id]);
       },
@@ -89,7 +125,11 @@ export class TaleFormComponent {
     });
   }
 
-  goHome() {
-    this.router.navigateByUrl('/');
+  goBack() {
+    if (this.editId) {
+      this.router.navigate(['/tale', this.editId]);
+    } else {
+      this.router.navigateByUrl('/');
+    }
   }
 }

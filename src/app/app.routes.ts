@@ -48,5 +48,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/bookshelf/bookshelf.component').then(m => m.BookshelfComponent),
   },
+
+  {
+    path: 'tale/:id/edit',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/tales/tale-form.component').then(m => m.TaleFormComponent),
+  },
   { path: '**', redirectTo: '' },
 ];

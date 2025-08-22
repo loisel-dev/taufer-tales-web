@@ -21,4 +21,9 @@ export class TalesService {
     return this.http.post<Tale>(`${environment.apiUrl}/tales`, dto);
   }
 
+
+  update(id: number, dto: TaleCreate) {
+    return this.http.patch<Tale>(`${environment.apiUrl}/tales/${id}`, dto);
+  }
+
 }
