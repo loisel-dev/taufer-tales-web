@@ -20,7 +20,11 @@ interface Tale {
   selector: 'tt-tale-detail',
   imports: [CommonModule, RouterModule],
   template: `
-    @if (tale()?.id) {<div class="hstack" style="justify-content:flex-end; gap:8px; margin-bottom:8px;"><a [routerLink]="['/tale', tale()?.id, 'edit']" class="btn btn-primary">Edit</a></div>}
+    @if (tale()?.id && auth.user()) {
+      <div class="hstack" style="justify-content:flex-end; gap:8px; margin-bottom:8px;">
+        <a [routerLink]="['/tale', tale()?.id, 'edit']" class="btn btn-primary">Edit</a>
+      </div>
+    }
     <div class="vstack" style="gap:18px;">
       <a routerLink="/" class="btn">← Back</a>
       <h2 style="margin:0;">{{ tale()?.title }}</h2>
@@ -48,7 +52,20 @@ interface Tale {
       </div>
 
       <div class="card">
-        <div class="muted">Reviews ({{ reviews().length }})</div>
+        <div class="hstack" style="justify-content:space-between; align-items:center;">
+          <div class="muted">Reviews ({{ reviews().length }})</div>
+          @if (auth.user() && tale()) {
+            @if (!myReview()) {
+              <a class="btn btn-primary" [routerLink]="['/review/new', tale()?.id]">+ Add review</a>
+            } @else {
+              <div class="hstack" style="gap:8px;">
+                <a class="btn" [routerLink]="['/review/edit', myReview()?.id]">Edit my review</a>
+                <button class="btn" (click)="deleteMyReview()">Delete</button>
+              </div>
+            }
+          }
+        </div>
+
         <div class="vstack" style="gap:12px;">
           @for (r of reviews(); track r.id) {
             <div class="card" style="border:1px solid #eee;">
@@ -110,5 +127,15 @@ export class TaleDetailComponent {
     const id = this.tale()?.id;
     if (!id) return;
     this.shelf.clearStatus(id).subscribe(() => this.myStatus.set(null));
+  }
+
+  deleteMyReview() {
+    const r = this.myReview();
+    if (!r) return;
+    if (!confirm('Delete your review?')) return;
+    this.reviewsApi.delete(r.id).subscribe(() => {
+      const id = this.tale()?.id;
+      if (id) this.load(id);
+    });
   }
 }
