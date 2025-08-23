@@ -2,6 +2,7 @@ import {Injectable, signal} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {tap} from 'rxjs/operators';
 import {environment} from '../../../environments/environment';
+import { PRIVACY_POLICY_VERSION } from '../../../environments/environment';
 
 type Session = { username: string; token: string };
 type AuthResponse = { token: string; username: string };
@@ -33,8 +34,8 @@ export class AuthService {
     );
   }
 
-  register(username: string, email: string, password: string) {
-    return this.http.post<void>(`${environment.apiUrl}/auth/register`, {username, email, password});
+  register(username: string, email: string, password: string, privacyAccepted: boolean) {
+    return this.http.post<void>(`${environment.apiUrl}/auth/register`, {username, email, password, privacyAccepted, privacyVersion: PRIVACY_POLICY_VERSION});
   }
 
   logout() {

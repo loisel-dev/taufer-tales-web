@@ -19,8 +19,7 @@ import {AuthService} from '../../core/services/auth.service';
           <label>Email</label>
           <input class="input" [(ngModel)]="email" name="e" type="email" required>
         </div>
-        <div class="form-field">
-          <label>Password</label>
+        <div class="form-field">\n          <label>Password</label>
           <input class="input" [(ngModel)]="password" name="p" type="password" required>
         </div>
         <div class="hstack" style="justify-content:flex-end;">
@@ -33,6 +32,7 @@ import {AuthService} from '../../core/services/auth.service';
 })
 export class RegisterComponent {
   username = '';
+  privacyAccepted = false;
   email = '';
   password = '';
   msg = '';
@@ -41,7 +41,8 @@ export class RegisterComponent {
   }
 
   onSubmit() {
-    this.auth.register(this.username, this.email, this.password).subscribe({
+    if (!this.privacyAccepted) { this.msg = 'Bitte akzeptieren Sie die Datenschutzerklärung.'; return; }
+    this.auth.register(this.username, this.email, this.password, true).subscribe({
       next: () => {
         this.msg = 'Registration successful. Please log in.';
         this.router.navigateByUrl('/login');

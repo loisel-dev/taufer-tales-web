@@ -32,3 +32,11 @@
 <main class="container">
   <router-outlet></router-outlet>
 </main>
+<footer class="container" style="margin-top:32px;padding-top:16px;border-top:1px solid #eee;">
+  <div class="vstack" style="gap:8px;align-items:flex-start;">
+    <a routerLink="/datenschutz" class="link">Datenschutzerklärung</a>
+    <a href="" (click)="$event.preventDefault(); openConsent()" class="link">Datenschutzeinstellungen</a>
+  </div>
+</footer>
+<tt-cookie-consent></tt-cookie-consent>
+

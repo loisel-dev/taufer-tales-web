@@ -133,3 +133,5 @@ dist
 .idea/
 .gitattributes
 .editorconfig
+
+*.zip

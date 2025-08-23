@@ -3,6 +3,11 @@ import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
+  path: 'datenschutz',
+  loadComponent: () => import('./legal/datenschutz.component').then(m => m.DatenschutzComponent),
+},
+
+  {
     path: '',
     pathMatch: 'full',
     loadComponent: () =>
