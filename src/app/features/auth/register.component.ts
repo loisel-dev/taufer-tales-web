@@ -22,6 +22,10 @@ import {AuthService} from '../../core/services/auth.service';
         <div class="form-field">\n          <label>Password</label>
           <input class="input" [(ngModel)]="password" name="p" type="password" required>
         </div>
+        <div class="check-box">
+          <input type="checkbox" [(ngModel)]="privacyAccepted" name="d">
+          <label>Ich stimme der Datenschutzerklärung zu</label>
+        </div>
         <div class="hstack" style="justify-content:flex-end;">
           <button class="btn btn-primary" type="submit">Register</button>
         </div>
